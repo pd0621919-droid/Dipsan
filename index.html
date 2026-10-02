@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <meta name="description" content="Beast Anime Studio - mobile-first anime production dashboard">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <title>Beast Anime Studio</title>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="brand">🐉 Beast Anime Studio</div>
+      <div class="sub">Story → Hindi voice → video → YouTube</div>
+    </div>
+    <button id="installBtn" class="ghost hidden">Install</button>
+  </header>
+
+  <main class="wrap">
+    <section class="hero card">
+      <div>
+        <span class="pill">MOBILE FIRST</span>
+        <h1>Build your original anime universe.</h1>
+        <p>Start with childhood fun, grow the heroes naturally, then move into mystery, training and daring adult chases.</p>
+      </div>
+      <button id="demoBtn" class="primary">Load demo universe</button>
+    </section>
+
+    <nav class="tabs">
+      <button class="tab active" data-tab="story">Story</button>
+      <button class="tab" data-tab="production">Production</button>
+      <button class="tab" data-tab="youtube">YouTube</button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </nav>
+
+    <section id="story" class="tabpage active">
+      <div class="grid">
+        <div class="card">
+          <h2>Universe</h2>
+          <label>Name<input id="universeName" placeholder="e.g. Beastbound Legends"></label>
+          <label>Story bible<textarea id="bible" rows="6" placeholder="Original world, heroes, beasts, dragons, ancient mystery..."></textarea></label>
+          <button id="saveUniverse" class="primary full">Save universe</button>
+        </div>
+
+        <div class="card">
+          <h2>Chapter generator</h2>
+          <label>Life stage
+            <select id="stage">
+              <option>Childhood — fun & discovery</option>
+              <option>Growing up — training & mystery</option>
+              <option>Teen years — missions & danger</option>
+              <option>Adult — daring chases & major conflict</option>
+            </select>
+          </label>
+          <label>Chapter number<input id="chapterNo" type="number" min="1" value="1"></label>
+          <button id="generateChapter" class="primary full">Generate chapter plan</button>
+          <pre id="chapterOutput" class="output">Your generated chapter will appear here.</pre>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Life-stage progression</h2>
+        <div class="timeline">
+          <div><b>1</b><span>Childhood<br><small>Fun, friendship, small discoveries</small></span></div>
+          <div><b>2</b><span>Growing up<br><small>Training, secrets, first missions</small></span></div>
+          <div><b>3</b><span>Teen years<br><small>Villains, dragons, daring escapes</small></span></div>
+          <div><b>4</b><span>Adult era<br><small>Ancient war, major chases, final conflict</small></span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="production" class="tabpage">
+      <div class="grid">
+        <div class="card">
+          <h2>Daily plan</h2>
+          <div class="bigstat">4 <span>Shorts</span></div>
+          <div class="bigstat">2 <span>long videos</span></div>
+          <p class="muted">Planner only: actual rendering and uploads happen on your cloud backend.</p>
+          <button id="makePlan" class="primary full">Create today's queue</button>
+        </div>
+
+        <div class="card">
+          <h2>Cloud workflow</h2>
+          <ol class="steps">
+            <li>Generate story + scenes</li>
+            <li>Create Hindi narration</li>
+            <li>Render video with FFmpeg</li>
+            <li>Upload temporary MP4 to cloud storage</li>
+            <li>Upload to YouTube</li>
+            <li>Verify YouTube upload</li>
+            <li>Delete old temporary file</li>
+          </ol>
+          <button id="checkBackend" class="secondary full">Check backend</button>
+          <div id="backendStatus" class="status">Not checked</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Queue</h2>
+        <div id="queue" class="queue"></div>
+      </div>
+    </section>
+
+    <section id="youtube" class="tabpage">
+      <div class="card">
+        <h2>YouTube connection</h2>
+        <p>Keep Google credentials on the backend. Never put a YouTube client secret in this website.</p>
+        <div class="status warn">OAuth connection is completed on the cloud backend.</div>
+        <button id="openBackend" class="secondary full">Open backend API</button>
+      </div>
+      <div class="card">
+        <h2>SEO pack</h2>
+        <label>Topic<input id="seoTopic" placeholder="Ancient dragon mystery"></label>
+        <button id="seoBtn" class="primary full">Create SEO draft</button>
+        <pre id="seoOutput" class="output">Title, description and tags will appear here.</pre>
+      </div>
+    </section>
+
+    <section id="settings" class="tabpage">
+      <div class="card">
+        <h2>Backend URL</h2>
+        <label>Cloud API URL<input id="apiUrl" placeholder="https://your-backend.example.com"></label>
+        <button id="saveSettings" class="primary full">Save settings</button>
+        <p class="muted">For GitHub Pages, point this to your deployed FastAPI backend.</p>
+      </div>
+      <div class="card">
+        <h2>Safety & originality</h2>
+        <ul class="plain">
+          <li>Use original characters, lore, dialogue and visual designs.</li>
+          <li>Keep childhood chapters age-appropriate.</li>
+          <li>Increase action and mystery gradually as characters grow.</li>
+          <li>Keep API keys and OAuth secrets server-side.</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+
+  <footer>Beast Anime Studio • V1 merged starter</footer>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,7 +1,4 @@
-fastapi==0.115.6
-uvicorn[standard]==0.34.0
-google-cloud-storage==2.19.0
-google-api-python-client==2.156.0
-google-auth-oauthlib==1.2.1
-pydantic-settings==2.7.1
-python-multipart==0.0.20
+fastapi>=0.115,<1
+uvicorn[standard]>=0.34,<1
+replicate>=1.0,<2
+pydantic>=2.10,<3

@@ -1,45 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Beast Anime Studio</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-
-<body>
-  <main class="container">
-    <h1>🔥 Beast Anime Studio</h1>
-    <p>Create your Beastbound anime scenes.</p>
-
-    <label>Scene Prompt</label>
-    <textarea id="prompt" rows="7">BEASTBOUND: DIMENSION ZERO — cinematic anime scene. A mysterious child stands before a massive dimensional rift. Storm energy, glowing symbols, powerful Beast aura, dramatic lighting, cinematic camera movement, intense VFX, original anime world.</textarea>
-
-    <label>Duration</label>
-    <select id="duration">
-      <option value="5">5 seconds</option>
-      <option value="8">8 seconds</option>
-      <option value="12">12 seconds</option>
-      <option value="16">16 seconds</option>
-    </select>
-
-    <label>Aspect Ratio</label>
-    <select id="ratio">
-      <option value="16:9">16:9 — Long Video</option>
-      <option value="9:16">9:16 — Shorts</option>
-      <option value="1:1">1:1 — Square</option>
-    </select>
-
-    <button id="generate">🔥 Generate Video</button>
-
-    <div id="status"></div>
-
-    <label>Backend URL</label>
-    <input id="api" value="https://dipsan.onrender.com">
-
-    <button id="save">Save Backend URL</button>
-  </main>
-
-  <script src="app.js"></script>
-</body>
-</html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0a0f1f"><title>Beast Anime Studio</title><link rel="stylesheet" href="style.css"></head><body>
+<header><div><b>🔥 Beast Anime Studio</b><small>BEASTBOUND: DIMENSION ZERO</small></div><button id="health">Backend Check</button></header>
+<nav id="nav"><button data-page="dashboard">Dashboard</button><button data-page="story">Story</button><button data-page="shorts">Shorts</button><button data-page="long">Long Videos</button><button data-page="scenes">Scenes</button><button data-page="audio">Audio & VFX</button><button data-page="seo">SEO</button><button data-page="settings">Settings</button></nav>
+<main>
+<section id="dashboard" class="page active"><div class="hero card"><span>ORIGINAL ANIME WORLD</span><h1>Build your story, scenes and episodes.</h1><p>Plan 4 Shorts and 2 long episodes daily. Long episodes are assembled from short generated scenes.</p><button data-page="long" class="primary">Open 15–16 min Episode Builder</button></div><div class="grid"><div class="card"><h2>Today</h2><div class="stat">2 <small>Long Episodes</small></div><div class="stat">4 <small>Shorts</small></div></div><div class="card"><h2>Episode 1</h2><p>The Child from the Rift</p><button data-page="story">Open Story</button></div></div></section>
+<section id="story" class="page"><div class="card"><h2>📖 Story / Universe</h2><label>Series title<input id="series" value="BEASTBOUND: DIMENSION ZERO"></label><label>Premise<textarea id="premise">A mysterious child appears from a dimensional rift with no memory. Beast Powers and ancient dimensions collide while clues slowly reveal the child's connection to the disaster.</textarea></label><label>Beast Powers<input id="powers" value="Storm, Inferno, Abyss, Shadow, Dragon, Void, Unknown"></label><button id="saveStory" class="primary">Save Story</button><p id="storyMsg"></p></div><div class="card"><h2>Episode 1 Outline</h2><ol><li>Cold open — dimensional storm</li><li>Mysterious child</li><li>Comedy / friendship</li><li>Strange symbol</li><li>Rift opens</li><li>First Beast</li><li>Ultra fight</li><li>Unknown power awakens</li><li>Chase</li><li>Emotional aftermath</li><li>Ancient truth</li><li>Final twist / cliffhanger</li></ol></div></section>
+<section id="shorts" class="page"><div class="card"><h2>📱 Shorts</h2><p>Vertical 9:16 clips. Generate several scenes and combine them into a Short up to 60 seconds.</p><label>Prompt<textarea id="shortPrompt">A mysterious Beast portal opens above an ancient city. Lightning, shadow energy, debris, fast cinematic anime camera and a powerful cliffhanger.</textarea></label><label>Shot length<select id="shortDur"><option>5</option><option>8</option><option>12</option><option>16</option></select></label><button id="shortGen" class="primary">🔥 Generate Short Shot</button><div id="shortMsg"></div></div></section>
+<section id="long" class="page"><div class="card"><h2>🎬 Long Videos — 15–16 Minutes</h2><p><b>Important:</b> the current video model generates short clips, so this builder creates a complete episode plan from many scenes instead of sending an impossible 15-minute generation request.</p><div class="grid"><label>Episode length<select id="longLen"><option value="15">15 minutes</option><option value="16">16 minutes</option></select></label><label>Scene count<select id="count"><option>45</option><option selected>60</option><option>75</option><option>90</option></select></label></div><label>Episode title<input id="epTitle" value="Episode 1 — The Child from the Rift"></label><label>Episode direction<textarea id="epPrompt">Cinematic original anime episode with mystery, friendship, ancient symbols, dimensional rifts, Beast battles, power awakening, chase, emotional aftermath, ancient truth and a delayed villain connection reveal.</textarea></label><button id="build" class="primary">Build 15–16 Minute Plan</button><button id="nextScene">Generate Next Scene</button><div id="longMsg"></div><div id="plan"></div></div></section>
+<section id="scenes" class="page"><div class="card"><h2>🎥 Scene Generator</h2><label>Scene type<select id="type"><option>COMEDY</option><option>MYSTERY</option><option>EMOTIONAL</option><option>CHASE</option><option>FIGHT</option><option>BOSS</option><option>POWER AWAKENING</option><option>DIMENSION</option><option>RELATIONSHIP</option><option>CLIFFHANGER</option></select></label><label>Intensity<select id="intensity"><option>Normal</option><option>High</option><option selected>Ultra</option><option>Boss Battle</option></select></label><label>Prompt<textarea id="scenePrompt">A mysterious child faces a giant Beast emerging from a dimensional rift. Glowing runes, lightning, dust, debris, shockwaves, speed trails, cinematic lighting and dramatic camera movement. Original characters and world.</textarea></label><div class="grid"><label>Duration<select id="sceneDur"><option>5</option><option>8</option><option>12</option><option>16</option></select></label><label>Ratio<select id="ratio"><option>16:9</option><option>9:16</option><option>1:1</option></select></label></div><button id="sceneGen" class="primary">🔥 Generate Scene</button><div id="sceneMsg"></div></div></section>
+<section id="audio" class="page"><div class="card"><h2>🎧 Audio & VFX Planner</h2><label>Hindi voice style<select id="voice"><option>Calm narrator</option><option>Young hero</option><option>Battle commander</option><option>Mysterious villain</option><option>Emotional</option></select></label><label>VFX<textarea id="vfx">Beast aura, fire, ice, lightning, shadow, void, impacts, shockwaves, dust, debris, portals, reality distortion, glowing symbols, giant Beast manifestations, speed trails, power awakening, transformations, runes, cinematic lighting, controlled camera shake and slow motion.</textarea></label><label>Music<select id="music"><option>Epic cinematic</option><option>Mystery</option><option>Battle</option><option>Emotional</option><option>Villain atmosphere</option></select></label><button id="saveAudio" class="primary">Save Audio & VFX Plan</button><p id="audioMsg"></p></div></section>
+<section id="seo" class="page"><div class="card"><h2>📈 SEO Planner</h2><label>Title<input id="seoTitle" value="BEASTBOUND: DIMENSION ZERO — The Child from the Rift"></label><label>Description<textarea id="seoDesc">Original anime story about a mysterious child, Beast Powers, dimensional rifts, ancient secrets and a hidden connection to the disaster.</textarea></label><button id="seoGen" class="primary">Generate SEO Draft</button><pre id="seoOut"></pre></div></section>
+<section id="settings" class="page"><div class="card"><h2>⚙️ Settings</h2><label>Backend URL<input id="api" value="https://dipsan.onrender.com"></label><button id="saveApi" class="primary">Save Backend URL</button><button id="clear">Clear Local Data</button><p id="settingsMsg"></p></div></section>
+</main><footer>Beast Anime Studio • original world and characters</footer><script src="app.js"></script></body></html>

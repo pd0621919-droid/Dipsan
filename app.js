@@ -1,71 +1,16 @@
-const apiInput = document.getElementById("api");
-
-apiInput.value =
-  localStorage.getItem("beast_api_url") ||
-  "https://dipsan.onrender.com";
-
-document.getElementById("save").onclick = () => {
-  localStorage.setItem(
-    "beast_api_url",
-    apiInput.value.replace(/\/$/, "")
-  );
-
-  document.getElementById("status").textContent =
-    "Backend URL saved.";
-};
-
-document.getElementById("generate").onclick = async () => {
-  const status = document.getElementById("status");
-  const api = apiInput.value.replace(/\/$/, "");
-
-  status.textContent =
-    "Generating your Beastbound scene…";
-
-  try {
-    const response = await fetch(
-      api + "/video/create",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          prompt: document.getElementById("prompt").value,
-          duration: Number(
-            document.getElementById("duration").value
-          ),
-          resolution: "720p",
-          aspect_ratio:
-            document.getElementById("ratio").value,
-          audio: true
-        })
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(
-        data.detail || "Generation failed"
-      );
-    }
-
-    if (data.video_url) {
-      status.innerHTML =
-        "<b>✅ Video created!</b><br>" +
-        '<a href="' +
-        data.video_url +
-        '" target="_blank">Open MP4</a>' +
-        '<video class="video" controls src="' +
-        data.video_url +
-        '"></video>';
-    } else {
-      status.textContent =
-        JSON.stringify(data, null, 2);
-    }
-
-  } catch (error) {
-    status.textContent =
-      "❌ " + error.message;
-  }
-};
+const $=id=>document.getElementById(id); const api=$('api'); api.value=localStorage.getItem('beast_api')||'https://dipsan.onrender.com';
+function show(p){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));$(p).classList.add('active');document.querySelectorAll('#nav button').forEach(x=>x.classList.toggle('active',x.dataset.page===p));scrollTo({top:0,behavior:'smooth'})}
+document.querySelectorAll('[data-page]').forEach(x=>x.onclick=()=>show(x.dataset.page));
+$('health').onclick=async()=>{try{let r=await fetch(api.value.replace(/\/$/,'')+'/health');let j=await r.json();alert(j.ok?'Backend online • '+(j.model||'ready'):'Backend responded')}catch(e){alert('Backend check failed: '+e.message)}};
+$('saveStory').onclick=()=>{localStorage.setItem('beast_story',JSON.stringify({series:$('series').value,premise:$('premise').value,powers:$('powers').value}));$('storyMsg').textContent='Saved on this device.'};
+$('saveApi').onclick=()=>{localStorage.setItem('beast_api',api.value.replace(/\/$/,''));$('settingsMsg').textContent='Backend URL saved.'};
+$('clear').onclick=()=>{localStorage.clear();location.reload()};
+async function gen(prompt,dur,ratio,out){$(out).textContent='Generating…';try{let r=await fetch(api.value.replace(/\/$/,'')+'/video/create',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({prompt,duration:Number(dur),resolution:'720p',aspect_ratio:ratio,audio:true})});let j=await r.json();if(!r.ok)throw Error(j.detail||'Generation failed');$(out).innerHTML=`✅ Video created — <a target="_blank" href="${j.video_url}">Open MP4</a><video controls src="${j.video_url}"></video>`;return j}catch(e){$(out).textContent='❌ '+e.message}}
+$('sceneGen').onclick=()=>gen(`Type: ${$('type').value}. Intensity: ${$('intensity').value}. ${$('scenePrompt').value}`,$('sceneDur').value,$('ratio').value,'sceneMsg');
+$('shortGen').onclick=()=>gen($('shortPrompt').value,$('shortDur').value,'9:16','shortMsg');
+function build(){let mins=+$('longLen').value,n=+$('count').value,total=mins*60,types=['Cold open','Mystery','Comedy','Symbol','Rift','Beast','Fight','Awakening','Chase','Emotion','Ancient truth','Cliffhanger'];let plan=Array.from({length:n},(_,i)=>({i:i+1,type:types[i%types.length],seconds:Math.max(5,Math.round(total/n)),prompt:`${$('epPrompt').value} Scene ${i+1}: ${types[i%types.length]}. Original cinematic anime.`}));localStorage.setItem('episode_plan',JSON.stringify(plan));render(plan);$('longMsg').textContent=`${n} scenes planned for ${mins} minutes.`;return plan}
+function render(plan){$('plan').innerHTML=plan.map(x=>`<div class="row"><span><b>Scene ${x.i}</b> — ${x.type} · ${x.seconds}s</span><button data-use="${x.i}">Use</button></div>`).join('');document.querySelectorAll('[data-use]').forEach(b=>b.onclick=()=>{let x=plan[+b.dataset.use-1];$('scenePrompt').value=x.prompt;show('scenes')})}
+$('build').onclick=build;$('nextScene').onclick=async()=>{let p=JSON.parse(localStorage.getItem('episode_plan')||'null')||build();let done=+(localStorage.getItem('done_scenes')||0),x=p[done%p.length];let j=await gen(x.prompt,Math.min(16,Math.max(5,x.seconds)),'16:9','longMsg');if(j)localStorage.setItem('done_scenes',done+1)};
+let old=localStorage.getItem('episode_plan');if(old)try{render(JSON.parse(old))}catch{}
+$('saveAudio').onclick=()=>{$('audioMsg').textContent='Audio and VFX plan saved on this device.';localStorage.setItem('audio_plan',JSON.stringify({voice:$('voice').value,vfx:$('vfx').value,music:$('music').value}))};
+$('seoGen').onclick=()=>{$('seoOut').textContent=`TITLE\n${$('seoTitle').value}\n\nDESCRIPTION\n${$('seoDesc').value}\n\nTAGS\nanime, original anime, Beastbound, Dimension Zero, anime story, anime fight, Beast Powers, dimensional rift, Hindi anime`};

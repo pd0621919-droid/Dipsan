@@ -1,17 +1,36 @@
 import os
-import secrets
+import uuid
 from pathlib import Path
 from typing import Optional
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+import replicate
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse, HTMLResponse
-from google.cloud import storage
-from google_auth_oauthlib.flow import Flow
-from google.oauth2.credentials import Credentials
-from googleapiclient.discovery import build
+from fastapi.responses import FileResponse
+from pydantic import BaseModel, Field
 
-app = FastAPI(title="Beast Anime Studio Cloud API", version="1.1.0")
+APP_DIR = Path(__file__).resolve().parent
+VIDEO_DIR = APP_DIR / "generated_videos"
+VIDEO_DIR.mkdir(parents=True, exist_ok=True)
+
+BACKEND_PUBLIC_URL = os.getenv("BACKEND_PUBLIC_URL", "https://dipsan.onrender.com").rstrip("/")
+REPLICATE_API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
+
+# Fast first-pipeline model: text-to-video, 1–16 seconds, synchronized audio.
+REPLICATE_MODEL = os.getenv("REPLICATE_VIDEO_MODEL", "vidu/q3-turbo")
+
+DEFAULT_PROMPT = (
+    "Original anime-inspired cinematic scene, a mysterious young hero stands in an "
+    "ancient ruined forest at night. A gigantic dimensional portal opens behind him, "
+    "glowing Beast energy surrounds his body, wind and debris swirl through the air, "
+    "strange ancient symbols illuminate the ground, his eyes briefly glow with unknown "
+    "power, and a huge mysterious shadow moves inside the portal. Dynamic camera "
+    "movement, dramatic cinematic lighting, intense energy particles, powerful "
+    "atmosphere, highly detailed original animation, mysterious cliffhanger feeling. "
+    "Original characters and original world, no existing anime characters."
+)
+
+app = FastAPI(title="Beast Anime Studio Video API", version="3.0-fast")
 
 app.add_middleware(
     CORSMiddleware,
@@ -21,153 +40,115 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-YOUTUBE_SCOPES = [
-    "https://www.googleapis.com/auth/youtube.upload",
-    "https://www.googleapis.com/auth/youtube.readonly",
-]
 
-CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
-CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
-REDIRECT_URI = os.getenv(
-    "GOOGLE_REDIRECT_URI",
-    "https://dipsan.onrender.com/youtube/callback",
-)
-TOKEN_FILE = Path(os.getenv("YOUTUBE_TOKEN_FILE", "/tmp/youtube_token.json"))
+class VideoCreateRequest(BaseModel):
+    prompt: str = Field(default=DEFAULT_PROMPT, min_length=1, max_length=5000)
+    duration: int = Field(default=5, ge=1, le=16)
+    resolution: str = Field(default="720p", pattern=r"^(540p|720p|1080p)$")
+    aspect_ratio: str = Field(default="16:9", pattern=r"^(16:9|9:16|3:4|4:3|1:1)$")
+    audio: bool = True
 
-def oauth_config():
-    if not CLIENT_ID or not CLIENT_SECRET:
-        raise HTTPException(
-            status_code=500,
-            detail="Google OAuth is not configured. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in Render.",
-        )
-    return {
-        "web": {
-            "client_id": CLIENT_ID,
-            "client_secret": CLIENT_SECRET,
-            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-            "token_uri": "https://oauth2.googleapis.com/token",
-            "redirect_uris": [REDIRECT_URI],
-        }
-    }
+
+def _public_video_url(filename: str) -> str:
+    return f"{BACKEND_PUBLIC_URL}/video/{filename}"
+
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "beast-anime-cloud-api"}
-
-@app.get("/workflow")
-def workflow():
     return {
-        "steps": ["story", "scene_plan", "voice", "video_render", "youtube_upload", "analytics"],
-        "youtube_oauth": True,
+        "ok": True,
+        "service": "beast-anime-studio-video",
+        "replicate_configured": bool(REPLICATE_API_TOKEN),
+        "model": REPLICATE_MODEL,
     }
 
-@app.get("/youtube/auth")
-def youtube_auth():
-    flow = Flow.from_client_config(
-        oauth_config(), scopes=YOUTUBE_SCOPES, redirect_uri=REDIRECT_URI
+
+@app.post("/video/create")
+def create_video(request: VideoCreateRequest):
+    if not REPLICATE_API_TOKEN:
+        raise HTTPException(
+            status_code=500,
+            detail="REPLICATE_API_TOKEN is missing. Add it only to Render Environment Variables.",
+        )
+
+    # Never accept or expose the token from the browser.
+    try:
+        output = replicate.run(
+            REPLICATE_MODEL,
+            input={
+                "prompt": request.prompt,
+                "duration": request.duration,
+                "resolution": request.resolution,
+                "aspect_ratio": request.aspect_ratio,
+                "audio": request.audio,
+            },
+        )
+    except Exception as exc:
+        message = str(exc).strip() or "Unknown Replicate error."
+        raise HTTPException(
+            status_code=502,
+            detail=f"Replicate video generation failed: {message}",
+        ) from exc
+
+    # Replicate's current video models return a file-like output with .read().
+    try:
+        video_bytes = output.read() if hasattr(output, "read") else None
+        if not video_bytes:
+            raise ValueError("Replicate returned no video bytes.")
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Replicate returned an unusable video output: {exc}",
+        ) from exc
+
+    filename = f"beastbound_{uuid.uuid4().hex}.mp4"
+    destination = VIDEO_DIR / filename
+    try:
+        destination.write_bytes(video_bytes)
+    except OSError as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Could not save generated MP4 on the server: {exc}",
+        ) from exc
+
+    return {
+        "success": True,
+        "model": REPLICATE_MODEL,
+        "duration": request.duration,
+        "filename": filename,
+        "video_url": _public_video_url(filename),
+    }
+
+
+@app.get("/video/{filename}")
+def get_video(filename: str):
+    # Only serve generated .mp4 files from our own directory.
+    if (
+        Path(filename).name != filename
+        or not filename.lower().endswith(".mp4")
+        or "/" in filename
+        or "\\" in filename
+    ):
+        raise HTTPException(status_code=400, detail="Invalid video filename.")
+
+    video_path = VIDEO_DIR / filename
+    if not video_path.is_file():
+        raise HTTPException(status_code=404, detail="Video not found.")
+
+    return FileResponse(
+        path=video_path,
+        media_type="video/mp4",
+        filename=filename,
     )
-    state = secrets.token_urlsafe(32)
-    authorization_url, _ = flow.authorization_url(
-        access_type="offline",
-        include_granted_scopes="true",
-        prompt="consent",
-        state=state,
+
+
+# Render can run this file directly with: uvicorn main:app --host 0.0.0.0 --port $PORT
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(
+        "main:app",
+        host="0.0.0.0",
+        port=int(os.getenv("PORT", "10000")),
+        reload=False,
     )
-    return RedirectResponse(authorization_url)
-
-@app.get("/youtube/callback")
-def youtube_callback(code: str, state: Optional[str] = None):
-    flow = Flow.from_client_config(
-        oauth_config(), scopes=YOUTUBE_SCOPES, redirect_uri=REDIRECT_URI
-    )
-    try:
-        flow.fetch_token(code=code)
-    except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"YouTube OAuth failed: {exc}")
-    TOKEN_FILE.write_text(flow.credentials.to_json(), encoding="utf-8")
-    return HTMLResponse(
-        "<html><body style='font-family:Arial;padding:30px'>"
-        "<h2>YouTube connected successfully.</h2>"
-        "<p>You can close this window and return to Beast Anime Studio.</p>"
-        "</body></html>"
-    )
-
-@app.get("/youtube/status")
-def youtube_status():
-    if not TOKEN_FILE.exists():
-        return {"connected": False}
-    try:
-        creds = Credentials.from_authorized_user_file(str(TOKEN_FILE), YOUTUBE_SCOPES)
-        if creds.expired and creds.refresh_token:
-            from google.auth.transport.requests import Request
-            creds.refresh(Request())
-            TOKEN_FILE.write_text(creds.to_json(), encoding="utf-8")
-        youtube = build("youtube", "v3", credentials=creds)
-        response = youtube.channels().list(part="snippet", mine=True).execute()
-        items = response.get("items", [])
-        if not items:
-            return {"connected": False, "reason": "No YouTube channel was returned."}
-        channel = items[0]
-        return {
-            "connected": True,
-            "channel_id": channel.get("id"),
-            "channel_title": channel.get("snippet", {}).get("title"),
-        }
-    except Exception as exc:
-        return {"connected": False, "reason": str(exc)}
-
-@app.post("/storage/upload")
-async def storage_upload(file: UploadFile = File(...)):
-    if not file.filename:
-        raise HTTPException(status_code=400, detail="Missing filename")
-    bucket_name = os.getenv("GCS_BUCKET")
-    if not bucket_name:
-        raise HTTPException(status_code=500, detail="GCS_BUCKET is not configured.")
-    try:
-        client = storage.Client()
-        bucket = client.bucket(bucket_name)
-        object_name = f"temp/{file.filename}"
-        blob = bucket.blob(object_name)
-        blob.upload_from_file(file.file, content_type=file.content_type or "video/mp4")
-        return {"ok": True, "object_name": object_name}
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
-
-@app.get("/storage/list")
-def storage_list():
-    bucket_name = os.getenv("GCS_BUCKET")
-    if not bucket_name:
-        raise HTTPException(status_code=500, detail="GCS_BUCKET is not configured.")
-    try:
-        client = storage.Client()
-        blobs = client.list_blobs(bucket_name, prefix="temp/")
-        return {"objects": [b.name for b in blobs]}
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
-
-@app.delete("/storage/{object_name:path}")
-def storage_delete(object_name: str):
-    bucket_name = os.getenv("GCS_BUCKET")
-    if not bucket_name:
-        raise HTTPException(status_code=500, detail="GCS_BUCKET is not configured.")
-    try:
-        client = storage.Client()
-        bucket = client.bucket(bucket_name)
-        bucket.blob(object_name).delete()
-        return {"ok": True, "deleted": object_name}
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))
-
-@app.post("/workflow/verify-and-clean")
-def verify_and_clean(object_name: str, youtube_video_id: str):
-    if not youtube_video_id.strip():
-        raise HTTPException(status_code=400, detail="A non-empty YouTube video ID is required.")
-    bucket_name = os.getenv("GCS_BUCKET")
-    if not bucket_name:
-        raise HTTPException(status_code=500, detail="GCS_BUCKET is not configured.")
-    try:
-        client = storage.Client()
-        client.bucket(bucket_name).blob(object_name).delete()
-        return {"ok": True, "deleted": object_name, "youtube_video_id": youtube_video_id}
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc))

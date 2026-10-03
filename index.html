@@ -1,56 +1,45 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Beast Anime Studio</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beast Anime Studio</title>
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-<header>
-<h1>⚡ Beast Anime Studio</h1>
-<p>BEASTBOUND: DIMENSION ZERO</p>
-</header>
+  <main class="container">
+    <h1>🔥 Beast Anime Studio</h1>
+    <p>Create your Beastbound anime scenes.</p>
 
-<main>
-<section class="card">
-<h2>🎬 Generate Scene</h2>
+    <label>Scene Prompt</label>
+    <textarea id="prompt" rows="7">BEASTBOUND: DIMENSION ZERO — cinematic anime scene. A mysterious child stands before a massive dimensional rift. Storm energy, glowing symbols, powerful Beast aura, dramatic lighting, cinematic camera movement, intense VFX, original anime world.</textarea>
 
-<label>Scene prompt</label>
-<textarea id="prompt">Original anime-inspired cinematic scene, a mysterious young hero stands in an ancient ruined forest at night. A gigantic dimensional portal opens behind him, glowing Beast energy surrounds his body, wind and debris swirl through the air, strange ancient symbols illuminate the ground, his eyes briefly glow with unknown power, and a huge mysterious shadow moves inside the portal. Dynamic camera movement, dramatic cinematic lighting, intense energy particles, powerful atmosphere, highly detailed original animation, mysterious cliffhanger feeling. Original characters and original world, no existing anime characters.</textarea>
+    <label>Duration</label>
+    <select id="duration">
+      <option value="5">5 seconds</option>
+      <option value="8">8 seconds</option>
+      <option value="12">12 seconds</option>
+      <option value="16">16 seconds</option>
+    </select>
 
-<div class="row">
-<div>
-<label>Duration</label>
-<select id="duration">
-<option>5</option>
-<option>8</option>
-<option>12</option>
-<option>16</option>
-</select>
-</div>
+    <label>Aspect Ratio</label>
+    <select id="ratio">
+      <option value="16:9">16:9 — Long Video</option>
+      <option value="9:16">9:16 — Shorts</option>
+      <option value="1:1">1:1 — Square</option>
+    </select>
 
-<div>
-<label>Format</label>
-<select id="ratio">
-<option>16:9</option>
-<option>9:16</option>
-<option>1:1</option>
-</select>
-</div>
-</div>
+    <button id="generate">🔥 Generate Video</button>
 
-<button id="generate">🔥 Generate Video</button>
-<div id="status"></div>
-</section>
+    <div id="status"></div>
 
-<section class="card">
-<h2>⚙️ Backend</h2>
-<input id="api" value="https://dipsan.onrender.com">
-<button id="save">Save Backend URL</button>
-</section>
-</main>
+    <label>Backend URL</label>
+    <input id="api" value="https://dipsan.onrender.com">
 
-<script src="app.js"></script>
+    <button id="save">Save Backend URL</button>
+  </main>
+
+  <script src="app.js"></script>
 </body>
 </html>

@@ -1,72 +1,50 @@
-# Beast Anime Studio — Merged V1
+# Beast Anime Studio — Fast Video Backend
 
-A mobile-first website starter that combines the two uploaded Beast Anime projects.
+This backend adds a small, real MP4 text-to-video pipeline to Beast Anime Studio.
 
-## What is included
+## Current model
 
-- Mobile-friendly dashboard
-- Original anime universe/story-bible editor
-- Childhood → growing-up → teen → adult chapter progression
-- 4 Shorts + 2 long-video daily planner
-- SEO draft generator in the browser
-- GitHub Pages-ready frontend
-- FastAPI cloud backend
-- Google Cloud Storage temporary MP4 workflow
-- Safe cleanup guardrail after a YouTube video ID is supplied
-- PWA/offline shell
+The package uses `vidu/q3-turbo` by default. It is a current Replicate video model designed for faster iteration and supports text-to-video clips up to 16 seconds, with optional synchronized audio.
 
-## Important V1 limitation
+The first test should stay small (the frontend defaults to 5 seconds). Do not try to generate a 15–20 minute episode in one request.
 
-This package is a working architecture/starter, not a magic one-click AI studio. The actual paid/credentialed services still need to be connected:
+## Environment variables
 
-1. AI story generation API
-2. Hindi TTS
-3. AI image/video generation provider
-4. FFmpeg rendering worker
-5. Google Cloud Storage credentials
-6. YouTube OAuth + upload
-7. YouTube Analytics
-8. A real job queue/worker for scheduled production
+Required on Render:
 
-Do not put API keys or Google OAuth secrets in the frontend.
+- `REPLICATE_API_TOKEN` — your existing private Render environment variable.
 
-## Free/mobile setup
+Optional:
 
-### Website
-Upload the root frontend files to a GitHub repository and enable GitHub Pages. The website can run from a phone browser.
+- `BACKEND_PUBLIC_URL=https://dipsan.onrender.com`
+- `REPLICATE_VIDEO_MODEL=vidu/q3-turbo`
 
-### Cloud backend
-Deploy `backend/` to a Python-compatible cloud service. Set:
+Never put the real Replicate token in `.env.example`, GitHub, `index.html`, or JavaScript.
 
-- `FRONTEND_ORIGIN`
-- `GCS_BUCKET`
-- `GCS_TEMP_PREFIX`
-- Google Application Credentials for the storage service account
+## Routes
 
-Then open the website's Settings tab and enter the backend URL.
+- `GET /health`
+- `POST /video/create`
+- `GET /video/{filename}`
 
-## Local backend test
+FastAPI Swagger docs are available at `/docs`.
 
-```bash
-cd backend
-pip install -r requirements.txt
-uvicorn main:app --reload
+## Render start command
+
+Use:
+
+```text
+uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
 
-Open `/docs` on the backend URL.
+If your Render service already has an equivalent FastAPI start command, keep it.
 
-## Production workflow
+## YouTube OAuth
 
-Phone website
-→ cloud API
-→ story generation
-→ Hindi narration
-→ scene generation
-→ FFmpeg render
-→ temporary GCS MP4
-→ YouTube upload
-→ verify upload
-→ schedule next day
-→ delete only the verified old temporary file
+This package is intentionally focused on the video-generation pipeline. It does not contain or expose YouTube OAuth credentials.
 
-Keep the project original and age-appropriate. YouTube growth and monetization are not guaranteed.
+Because the existing repository's current OAuth implementation was not available inside this ZIP-generation environment, do not delete unrelated OAuth routes/configuration from your existing application when integrating this backend. If your production `main.py` contains OAuth routes that are not present in this package, preserve those routes when applying the video routes.
+
+## Storage note
+
+Generated MP4s are saved under `backend/generated_videos/` and served immediately through `/video/{filename}`. Render filesystems can be ephemeral, so this is intended as the first working test pipeline rather than permanent media storage.
